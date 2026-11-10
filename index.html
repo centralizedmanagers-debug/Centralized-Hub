@@ -3,78 +3,155 @@
 <title>Centralized Team Hub</title>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 <style>
+:root{--ink:#0b1b33;--mut:#64748b;--line:#e5e9f0;--bg:#f4f6fa;--navy:#0b1b33;--acc:#2563eb;--ok:#15803d;--okb:#e7f6ec;--mid:#a16207;--midb:#fff4d6;--bad:#b91c1c;--badb:#fde8e8;--na:#94a3b8}
 *{box-sizing:border-box;margin:0;padding:0}
-body{font-family:'DM Sans',system-ui,sans-serif;background:#f8fafc;color:#0f172a}
-.hub{max-width:1000px;margin:0 auto;min-height:100vh;border:1px solid #e2e8f0}
-nav{background:#0f1e3d;padding:10px 16px;display:flex;gap:6px;align-items:center}
-nav b{color:#fff;margin-right:12px}
-nav button{background:none;border:0;color:rgba(255,255,255,.6);padding:6px 10px;border-radius:8px;font-weight:600;font-size:12px;cursor:pointer}
-nav button.on{color:#fff;background:rgba(255,255,255,.15)}
-.hd{background:linear-gradient(135deg,#0f1e3d,#1a2f55);color:#fff;padding:24px 28px}
-.hd h1{font-size:20px}.hd p{font-size:13px;color:rgba(255,255,255,.65);margin-top:4px}
-.ct{padding:20px 28px}
-.g{background:#fff;border:1.5px solid #e2e8f0;border-radius:14px;margin-bottom:10px;overflow:hidden}
-.gh{padding:14px 16px;cursor:pointer}
-.gt{font-size:14px;font-weight:800;margin-bottom:10px;display:flex;justify-content:space-between}
-.row{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
-.k{border:1.5px solid #e2e8f0;border-radius:12px;padding:10px 12px}
-.k.ok{border-color:#bbf7d0}.k.bad{border-color:#fecaca}
-.k .l{font-size:10px;font-weight:700;color:#64748b;text-transform:uppercase}
-.k .s{font-size:20px;font-weight:800}.k.ok .s{color:#15803d}.k.bad .s{color:#dc2626}
-.k .s small{font-size:11px;color:#64748b;font-weight:400;margin-left:4px}
-.bar{height:5px;background:#f1f5f9;border-radius:6px;margin-top:6px;overflow:hidden}.bar i{display:block;height:100%}
-.det{border-top:1px solid #e2e8f0;padding:12px 16px;overflow-x:auto}
-.lbl{font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#64748b;margin:10px 0 6px}
-table{width:100%;border-collapse:collapse;font-size:12px}
-th{color:#64748b;font-size:10px;text-align:right;padding:6px 8px;background:#f8fafc}
-td{padding:6px 8px;text-align:right;border-top:1px solid #f1f5f9}
-th:first-child,td:first-child{text-align:left}
-td.ok{color:#15803d;font-weight:700}td.bad{color:#dc2626;font-weight:700}
-.warn{background:#fef3c7;border:1px solid #fde68a;color:#92400e;border-radius:8px;padding:8px 12px;font-size:11px;margin-bottom:12px}
-.note{font-size:11px;color:#64748b}
-.btn{padding:8px 16px;background:#3b82f6;color:#fff;border:0;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;margin-bottom:14px}
-@media(max-width:640px){.row{grid-template-columns:1fr}.ct{padding:14px}}
-@media print{nav,.noprint{display:none}}
-</style></head><body><div class="hub">
-<nav><b>🏢 Centralized Hub</b><button id="n-sc" onclick="go('sc')">📊 Scorecard</button><button id="n-wk" onclick="go('wk')">📧 Weekly Glance</button></nav>
-<div id="app"></div></div>
+body{font-family:Inter,'Segoe UI',system-ui,-apple-system,sans-serif;background:var(--bg);color:var(--ink);font-size:14px;font-variant-numeric:tabular-nums}
+header{background:var(--navy);color:#fff;position:sticky;top:0;z-index:5}
+.top{max-width:1180px;margin:0 auto;padding:0 28px;height:56px;display:flex;align-items:center;gap:28px}
+.brand{font-weight:800;display:flex;align-items:center;gap:10px}.brand i{width:26px;height:26px;border-radius:7px;background:linear-gradient(135deg,#3b82f6,#06b6d4)}
+.tabs{display:flex;gap:4px;height:100%}.tabs button{background:none;border:0;color:#9fb0cc;font:600 13px Inter,system-ui,sans-serif;padding:0 14px;cursor:pointer;border-bottom:3px solid transparent}
+.tabs button.on{color:#fff;border-color:#3b82f6}.sp{flex:1}.pill{font-size:12px;color:#9fb0cc;display:flex;align-items:center;gap:7px}
+.dot{width:8px;height:8px;border-radius:50%;background:#f59e0b}.dot.live{background:#22c55e}
+main{max-width:1180px;margin:0 auto;padding:26px 28px 60px}
+h1{font-size:22px;font-weight:800}.sub{color:var(--mut);margin:4px 0 18px}
+.legend{display:flex;gap:16px;font-size:12px;color:var(--mut);margin-bottom:16px;flex-wrap:wrap}.legend span{display:flex;align-items:center;gap:6px}
+.legend i{width:10px;height:10px;border-radius:50%}
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:22px}
+.card{background:#fff;border:1px solid var(--line);border-radius:14px;box-shadow:0 1px 2px rgba(11,27,51,.04)}
+.kpi{padding:16px 18px}.kpi .l{font-size:11px;font-weight:700;color:var(--mut);text-transform:uppercase;letter-spacing:.06em}
+.kpi .v{font-size:32px;font-weight:800;margin:6px 0 2px;letter-spacing:-.02em}.kpi .g{font-size:12px;color:var(--mut)}
+.kpi.ok .v{color:var(--ok)}.kpi.mid .v{color:var(--mid)}.kpi.bad .v{color:var(--bad)}
+.bar{height:6px;background:#eef1f6;border-radius:6px;margin:12px 0 10px;overflow:hidden}.bar i{display:block;height:100%;border-radius:6px}
+.ok .bar i{background:#22a55a}.mid .bar i{background:#f2b01e}.bad .bar i{background:#dc2626}
+.tag{display:inline-block;font-size:11px;font-weight:700;padding:3px 9px;border-radius:20px;background:#eef1f6;color:var(--na)}
+.tag.ok{background:var(--okb);color:var(--ok)}.tag.mid{background:var(--midb);color:var(--mid)}.tag.bad{background:var(--badb);color:var(--bad)}
+.ch{padding:15px 20px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center}.ch h2{font-size:15px;font-weight:800}.ch span{font-size:12px;color:var(--mut)}
+table{width:100%;border-collapse:collapse}
+th{font-size:11px;font-weight:700;color:var(--mut);text-transform:uppercase;letter-spacing:.05em;text-align:left;padding:11px 16px;background:#fafbfd;border-bottom:1px solid var(--line)}
+td{padding:13px 16px;border-bottom:1px solid var(--line);vertical-align:middle}
+tr.r{cursor:pointer}tr.r:hover td{background:#fafbfd}.gn{font-weight:700}.gm{font-size:12px;color:var(--mut)}
+.m{display:flex;align-items:center;gap:8px}.m b{font-size:16px;min-width:50px}.m.ok b,td.ok{color:var(--ok)}.m.mid b,td.mid{color:var(--mid)}.m.bad b,td.bad{color:var(--bad)}.m.na b{color:var(--na)}
+td.ok,td.mid,td.bad{font-weight:700}
+svg.sp2{width:54px;height:20px}
+.dots{display:flex;gap:5px}.dots i{width:10px;height:10px;border-radius:50%;background:#dfe5ee}.dots i.ok{background:#22a55a}.dots i.mid{background:#f2b01e}.dots i.bad{background:#dc2626}
+.det td{background:#fafbfd;padding:0 16px 18px}.two{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+.det h3{font-size:11px;font-weight:700;color:var(--mut);text-transform:uppercase;letter-spacing:.06em;margin:16px 0 8px}
+.det table th,.det table td{padding:8px 10px;font-size:13px}.det table{background:#fff;border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.lists{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:22px}
+.li{padding:12px 20px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;font-size:13px}.li:last-child{border:0}.li small{color:var(--mut)}
+.banner{background:#fff8e6;border:1px solid #f5dfa0;color:#7a5b00;border-radius:10px;padding:10px 14px;font-size:13px;margin-bottom:16px}
+.btn{background:var(--acc);color:#fff;border:0;border-radius:9px;padding:9px 16px;font:700 13px Inter,system-ui,sans-serif;cursor:pointer}.btn.g2{background:#e8edf5;color:var(--ink)}
+.sum{padding:16px 22px 18px;line-height:1.7}.sum li{margin-left:18px}
+.fx{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:16px}
+select,input[type=text],input[type=number]{font:600 13px Inter,system-ui,sans-serif;border:1px solid #cfd7e3;border-radius:8px;padding:8px 10px;background:#fff}
+input[type=number]{width:84px}
+.mt{display:flex;gap:6px}.mt button{border:1px solid #cfd7e3;background:#fff;border-radius:20px;padding:6px 14px;font:700 12px Inter,system-ui,sans-serif;cursor:pointer}.mt button.on{background:var(--navy);color:#fff;border-color:var(--navy)}
+.lock{padding:34px;text-align:center}.lock h2{margin-bottom:8px}.lock p{color:var(--mut);max-width:560px;margin:0 auto 16px;line-height:1.6}
+@media(max-width:900px){.kpis{grid-template-columns:1fr 1fr}.lists,.two{grid-template-columns:1fr}main{padding:18px 14px}}
+@media print{header .tabs,.btn,.pill{display:none}body{background:#fff}.card{box-shadow:none}}
+</style></head><body>
+<header><div class="top"><div class="brand"><i></i>Centralized Team Hub</div>
+<div class="tabs"><button id="t-ov" onclick="go('ov')">Overview</button><button id="t-wk" onclick="go('wk')">Weekly Glance</button><button id="t-fc" onclick="go('fc')">Bonus Forecast</button></div>
+<div class="sp"></div><div class="pill"><span class="dot" id="dot"></span><span id="upd"></span></div></div></header>
+<main id="app"></main>
 <script>
-// Paste your NEW Firebase web config here (Project settings > General > Your apps).
-const FIREBASE_CONFIG = {apiKey:"AIzaSyAudBX5bP_lyoD28FfAeY12hl1IWrdhnxE",authDomain:"centralized-hub.firebaseapp.com",projectId:"centralized-hub",appId:"1:317300945151:web:fd29964374e6f3f836dcca"}
+// Paste your Firebase web config (Project settings > General > Your apps).
+const FIREBASE_CONFIG = null; // {apiKey:"",authDomain:"",projectId:"",appId:""}
+// Targets from the RET incentive plan. full = full payout ($50), min = partial payout ($25), below min = $0.
 const KPIS=[
- {id:'call_completion',label:'Phone · Call Completion',goal:90,u:'%'},
- {id:'task_management',label:'Agent Score · Task Mgmt',goal:9,u:''},
- {id:'fenix',label:'Insights · Scored Convos',goal:90,u:'%'}];
-const ORDER=[['pod1','POD 1 · CO Springs + UT'],['pod2','POD 2 · AZ'],['pod3','POD 3 · KS/MO/TN + FL'],['denver','Denver'],['aa','AA · Application Admin']];
-const MGR={pod1:'Camdem',pod2:'Candace',pod3:'Edwin',denver:'Maritza',aa:'Lauren'};
-let S={page:'sc',open:{},data:{},live:false};
-const ok=(v,g)=>v!=null&&v>=g;
-function demo(){let n=11;const r=()=>(n=(n*9301+49297)%233280)/233280;const o={};
- ORDER.forEach(([id,name])=>{const ag=['Agent A','Agent B','Agent C'].map(a=>({name:a,task_management:+(8+r()*2).toFixed(1),fenix:+(80+r()*18).toFixed(1),calls:Math.round(10+r()*40)}));
-  o[id]={name,reportDate:'sample',team:{call_completion:+(80+r()*18).toFixed(1),task_management:+(8+r()*2).toFixed(1),fenix:+(80+r()*18).toFixed(1)},agents:ag,communities:[{name:'Community 1',fenix:88,calls:20},{name:'Community 2',fenix:93,calls:15}]}});return o}
-function init(){S.data=demo();render();
- if(FIREBASE_CONFIG){try{firebase.initializeApp(FIREBASE_CONFIG);firebase.firestore().collection('groups').onSnapshot(q=>{const d={};q.forEach(x=>d[x.id]=x.data());if(Object.keys(d).length){S.data=d;S.live=true;render()}})}catch(e){console.error(e)}}}
+ {id:'fenix',label:'Call Quality (Fenix)',src:'Insights',full:90,min:80,u:'%'},
+ {id:'task_management',label:'Task Score',src:'Agent Score',full:8,min:6,u:''},
+ {id:'call_completion',label:'Call Completion',src:'Phone Report',full:80,min:70,u:'%'},
+ {id:'call_back_rate',label:'Callback Rate',src:'Phone Report',full:95,min:80,u:'%'}];
+const GROUPS=[['pod1','POD 1','CO Springs + UT','Camdem'],['pod2','POD 2','AZ','Candace'],['pod3','POD 3','KS/MO/TN + FL','Edwin'],['denver','Denver','Pilot','Maritza'],['aa','AA','Application Admin','Lauren']];
+const OPEN_DATE=new Date('2027-01-01T00:00:00');
+let S={page:'ov',open:null,data:{},hist:{},live:false,db:null,user:null,mg:null,fc:{gid:null,month:null,agents:[],preview:false,msg:''}};
+const st=(k,v)=>v==null?'na':v>=k.full?'ok':v>=k.min?'mid':'bad';
+const pay=(k,v)=>v==null?null:v>=k.full?50:v>=k.min?25:0;
+const f=(v,u)=>v==null?'–':v+u, mean=a=>{a=a.filter(x=>x!=null&&x!=='');return a.length?+(a.reduce((x,y)=>x+ +y,0)/a.length).toFixed(1):null};
+const lab={ok:'On target',mid:'Within range',bad:'Below minimum',na:'No data'};
+function demo(){let n=7;const r=()=>(n=(n*9301+49297)%233280)/233280,d={},h={};
+ GROUPS.forEach(([id])=>{const b=[84+r()*10,6.5+r()*2.5,72+r()*14,85+r()*13];h[id]=Array.from({length:8},()=>({fenix:+(b[0]+r()*4-2).toFixed(1),task_management:+(b[1]+r()-.5).toFixed(1),call_completion:+(b[2]+r()*4-2).toFixed(1),call_back_rate:+(b[3]+r()*3-1.5).toFixed(1)}));
+  d[id]={team:h[id][7],reportDate:'sample',agents:['Agent A','Agent B','Agent C','Agent D'].map(a=>({name:a,task_management:+(5.5+r()*4.5).toFixed(1),fenix:+(74+r()*24).toFixed(1),calls:Math.round(8+r()*40)})),communities:[{name:'Community 1',fenix:88,calls:20},{name:'Community 2',fenix:94,calls:15}]}});
+ S.data=d;S.hist=h}
+function init(){demo();render();if(!FIREBASE_CONFIG)return;
+ try{firebase.initializeApp(FIREBASE_CONFIG);S.db=firebase.firestore();
+  S.db.collection('groups').onSnapshot(q=>{const d={};q.forEach(x=>d[x.id]=x.data());if(Object.keys(d).length){S.data=d;S.live=true;S.hist={};render()}});
+  const m=new Date().toISOString().slice(0,7)+'-01';
+  S.db.collection('groups_daily').where('reportDate','>=',m).onSnapshot(q=>{const h={};q.forEach(x=>{const v=x.data();(h[v.id]=h[v.id]||[]).push({d:v.reportDate,...v.team})});Object.values(h).forEach(a=>a.sort((x,y)=>x.d<y.d?-1:1));if(Object.keys(h).length){S.hist=h;render()}});
+  firebase.auth().onAuthStateChanged(u=>{S.user=u;S.mg=null;if(u)S.db.doc('config/managers').get().then(d=>{S.mg=d.exists?d.data():{};render()}).catch(()=>{S.mg={};render()});render()})}catch(e){console.error(e)}}
 function go(p){S.page=p;render()}
-function card(k,v){const has=v!=null,good=ok(v,k.goal);
- return `<div class="k ${has?(good?'ok':'bad'):''}"><div class="l">${k.label}</div><div class="s">${has?v+k.u:'—'}<small>/ ${k.goal}${k.u}</small></div>${has?`<div class="bar"><i style="width:${Math.min(100,v/k.goal*100)}%;background:${good?'#16a34a':'#e05c45'}"></i></div>`:''}</div>`}
-function cell(v,g,u){return `<td class="${v==null?'':ok(v,g)?'ok':'bad'}">${v==null?'–':v+u}</td>`}
-function detail(d){const ag=[...(d.agents||[])].sort((a,b)=>(b.fenix||0)-(a.fenix||0));
- return `<div class="det"><div class="lbl">Agents</div><table><tr><th>Agent</th><th>Task Mgmt</th><th>Scored Convos</th><th>Calls</th></tr>${ag.map(a=>`<tr><td>${a.name}</td>${cell(a.task_management,9,'')}${cell(a.fenix,90,'%')}<td>${a.calls??'–'}</td></tr>`).join('')||'<tr><td>No agents yet</td></tr>'}</table>
- ${(d.communities||[]).length?`<div class="lbl">Communities (scored conversations)</div><table><tr><th>Community</th><th>Score</th><th>Calls</th></tr>${d.communities.sort((a,b)=>a.fenix-b.fenix).map(c=>`<tr><td>${c.name}</td>${cell(c.fenix,90,'%')}<td>${c.calls}</td></tr>`).join('')}</table>`:''}
- ${(d.warnings||[]).length?`<div class="note" style="margin-top:8px">⚠ ${d.warnings.join(' · ')}</div>`:''}</div>`}
-function scorecard(){const first=Object.values(S.data)[0]||{};
- return `<div class="hd"><h1>📊 Scorecard</h1><p>Latest daily report by POD${S.live&&first.reportDate?' · '+first.reportDate:''}</p></div><div class="ct">
- ${!S.live?'<div class="warn">Showing sample data. Add your Firebase config in index.html to see live scores.</div>':''}
- ${ORDER.map(([id,name])=>{const d=S.data[id];if(!d)return `<div class="g"><div class="gh"><div class="gt"><span>${name} <span class="note" style="font-weight:600">· Manager: ${MGR[id]}</span></span><span class="note">No data yet</span></div></div></div>`;
-  return `<div class="g"><div class="gh" onclick="S.open['${id}']=!S.open['${id}'];render()"><div class="gt"><span>${name} <span class="note" style="font-weight:600">· Manager: ${MGR[id]}</span></span><span class="note">${S.open[id]?'▲':'▼'}</span></div><div class="row">${KPIS.map(k=>card(k,d.team?.[k.id])).join('')}</div></div>${S.open[id]?detail(d):''}</div>`}).join('')}</div>`}
-function weekly(){const all=ORDER.map(([id,n])=>S.data[id]&&{n,m:MGR[id],t:S.data[id].team||{}}).filter(Boolean);
- const avg=k=>{const v=all.map(x=>x.t[k]).filter(x=>x!=null);return v.length?+(v.reduce((a,b)=>a+b,0)/v.length).toFixed(1):null};
- return `<div class="hd"><h1>📧 Weekly At-a-Glance</h1><p>${new Date().toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'})}</p></div><div class="ct">
- <button class="btn noprint" onclick="print()">🖨 Print / Save PDF</button>
- <div class="row" style="margin-bottom:14px">${KPIS.map(k=>card({...k,label:'All groups · '+k.label},avg(k.id))).join('')}</div>
- <div class="g" style="padding:0;overflow-x:auto"><table><tr><th>Group</th>${KPIS.map(k=>`<th>${k.label}</th>`).join('')}</tr>${all.map(x=>`<tr><td>${x.n} <span class="note">· ${x.m}</span></td>${KPIS.map(k=>cell(x.t[k.id],k.goal,k.u)).join('')}</tr>`).join('')}</table></div></div>`}
-function render(){document.getElementById('app').innerHTML=S.page==='sc'?scorecard():weekly();
- ['sc','wk'].forEach(k=>document.getElementById('n-'+k).classList.toggle('on',S.page===k))}
+function spark(id,k){const a=(S.hist[id]||[]).map(x=>x[k]).filter(x=>x!=null);if(a.length<2)return '';
+ const mn=Math.min(...a),mx=Math.max(...a),sc=v=>mx===mn?10:18-((v-mn)/(mx-mn))*16;
+ return `<svg class="sp2" viewBox="0 0 54 20"><polyline fill="none" stroke="#94a3b8" stroke-width="1.5" points="${a.map((v,i)=>(i/(a.length-1)*52+1)+','+sc(v)).join(' ')}"/></svg>`}
+function tile(k,vals){const v=mean(vals),c=st(k,v),on=vals.filter(x=>st(k,x)==='ok').length;
+ return `<div class="card kpi ${c}"><div class="l">${k.label}</div><div class="v">${f(v,k.u)}</div><div class="g">Target ≥${k.full}${k.u} · minimum ${k.min}${k.u}</div>
+ <div class="bar"><i style="width:${v==null?0:Math.min(100,v/k.full*100)}%"></i></div><span class="tag ${c}">${vals.length?on+' of '+vals.length+' groups on target':'No data'}</span></div>`}
+const T=id=>S.data[id]?.team||{};
+const tiles=()=>`<div class="kpis">${KPIS.map(k=>tile(k,GROUPS.map(g=>T(g[0])[k.id]).filter(x=>x!=null))).join('')}</div>`;
+const legend='<div class="legend"><span><i style="background:#22a55a"></i>On target</span><span><i style="background:#f2b01e"></i>Within range (partial)</span><span><i style="background:#dc2626"></i>Below minimum</span></div>';
+function detail(d){const ag=[...(d.agents||[])].sort((a,b)=>(a.fenix??999)-(b.fenix??999)),c=(k,v)=>`<td class="${st(KPIS.find(x=>x.id===k),v)}">${f(v,k==='fenix'?'%':'')}</td>`;
+ return `<tr class="det"><td colspan="7"><div class="two"><div><h3>Agents</h3><table><tr><th>Agent</th><th>Call Quality</th><th>Task Score</th><th>Calls</th></tr>
+ ${ag.map(a=>`<tr><td>${a.name}</td>${c('fenix',a.fenix)}${c('task_management',a.task_management)}<td>${a.calls??'–'}</td></tr>`).join('')||'<tr><td colspan=4>No agents yet</td></tr>'}</table></div>
+ <div><h3>Communities · call quality</h3><table><tr><th>Community</th><th>Score</th><th>Calls</th></tr>
+ ${(d.communities||[]).slice().sort((a,b)=>a.fenix-b.fenix).map(x=>`<tr><td>${x.name}</td>${c('fenix',x.fenix)}<td>${x.calls}</td></tr>`).join('')||'<tr><td colspan=3>No data</td></tr>'}</table></div></div>
+ ${(d.warnings||[]).length?`<div class="gm" style="margin-top:10px">⚠ ${d.warnings.join(' · ')}</div>`:''}</td></tr>`}
+function overview(){const rows=GROUPS.map(([id,n,reg,mgr])=>{const d=S.data[id],t=T(id),on=KPIS.filter(k=>st(k,t[k.id])==='ok').length;
+  return `<tr class="r" onclick="S.open=S.open==='${id}'?null:'${id}';render()"><td><div class="gn">${n} <span style="font-weight:500;color:var(--mut)">· ${reg}</span></div><div class="gm">Manager: ${mgr}</div></td>
+  ${KPIS.map(k=>`<td>${d?`<div class="m ${st(k,t[k.id])}"><b>${f(t[k.id],k.u)}</b>${spark(id,k.id)}</div>`:'<span class="tag">No data yet</span>'}</td>`).join('')}
+  <td><div class="dots">${KPIS.map(k=>`<i class="${st(k,t[k.id])==='na'?'':st(k,t[k.id])}"></i>`).join('')}</div><div class="gm">${d?on+' of 4 on target':''}</div></td></tr>${S.open===id&&d?detail(d):''}`}).join('');
+ const ag=[];Object.entries(S.data).forEach(([id,d])=>(d.agents||[]).forEach(a=>{if(a.fenix!=null&&(a.calls||0)>=5)ag.push({...a,g:GROUPS.find(x=>x[0]===id)?.[1]||id})}));
+ const li=a=>`<div class="li"><span>${a.name} <small>· ${a.g}</small></span><b class="${st(KPIS[0],a.fenix)==='ok'?'':''}" style="color:var(--${st(KPIS[0],a.fenix)})">${a.fenix}%</b></div>`;
+ return `<h1>Performance Overview</h1><div class="sub">Targets follow the Resident Experience incentive plan · Phone, Agent Score and Insights</div>${legend}
+ ${S.live?'':'<div class="banner">Showing sample data. Add your Firebase config to <b>index.html</b> to go live.</div>'}${tiles()}
+ <div class="card"><div class="ch"><h2>Group scorecard</h2><span>Click a group for agents and communities</span></div><table><tr><th>Group</th>${KPIS.map(k=>`<th>${k.label}</th>`).join('')}<th>Status</th></tr>${rows}</table></div>
+ <div class="lists"><div class="card"><div class="ch"><h2>Needs attention</h2><span>Lowest call quality · 5+ calls</span></div>${ag.slice().sort((a,b)=>a.fenix-b.fenix).slice(0,5).map(li).join('')||'<div class="li">No data</div>'}</div>
+ <div class="card"><div class="ch"><h2>Top performers</h2><span>Highest call quality · 5+ calls</span></div>${ag.slice().sort((a,b)=>b.fenix-a.fenix).slice(0,5).map(li).join('')||'<div class="li">No data</div>'}</div></div>`}
+function weekly(){const dt=new Date().toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',year:'numeric'});
+ const lines=KPIS.map(k=>{const all=GROUPS.filter(g=>T(g[0])[k.id]!=null),by=s=>all.filter(g=>st(k,T(g[0])[k.id])===s).map(g=>g[1]+' ('+T(g[0])[k.id]+k.u+')');
+  return `<li><b>${k.label}</b>: ${by('ok').length} of ${all.length} groups on target (≥${k.full}${k.u}).${by('mid').length?' Within range: '+by('mid').join(', ')+'.':''}${by('bad').length?' Below minimum: '+by('bad').join(', ')+'.':''}</li>`}).join('');
+ return `<h1>Weekly At-a-Glance</h1><div class="sub">${dt}</div>${legend}<div style="margin-bottom:16px"><button class="btn" onclick="print()">Print / Save as PDF</button></div>${tiles()}
+ <div class="card" style="margin-bottom:18px"><div class="ch"><h2>Summary</h2></div><ul class="sum">${lines}</ul></div>
+ <div class="card"><div class="ch"><h2>Scorecard by group</h2></div><table><tr><th>Group</th><th>Manager</th>${KPIS.map(k=>`<th>${k.label}</th>`).join('')}</tr>
+ ${GROUPS.map(([id,n,reg,m])=>`<tr><td class="gn">${n} <span style="font-weight:500;color:var(--mut)">· ${reg}</span></td><td>${m}</td>${KPIS.map(k=>`<td class="${st(k,T(id)[k.id])}">${f(T(id)[k.id],k.u)}</td>`).join('')}</tr>`).join('')}</table></div>`}
+// ---------- Bonus forecast (managers sign in; scores entered monthly from Jan 2027) ----------
+function qInfo(){const d=new Date()<OPEN_DATE?OPEN_DATE:new Date(),q=Math.floor(d.getMonth()/3),y=d.getFullYear();
+ return {key:y+'Q'+(q+1),label:'Q'+(q+1)+' '+y,months:[0,1,2].map(i=>y+'-'+String(q*3+i+1).padStart(2,'0'))}}
+const mName=m=>new Date(m+'-15').toLocaleDateString('en-US',{month:'long'});
+function allowed(){if(S.fc.preview)return GROUPS.map(g=>g[0]);const m=S.mg||{},e=(S.user?.email||'').toLowerCase();
+ if((m.admins||[]).map(x=>x.toLowerCase()).includes(e))return GROUPS.map(g=>g[0]);const g=Object.entries(m.byEmail||{}).find(([k])=>k.toLowerCase()===e);return g?[g[1]]:[]}
+function loadFc(gid){const q=qInfo(),F=S.fc;F.gid=gid;F.month=F.month||q.months[0];F.agents=[];
+ const names=(S.data[gid]?.agents||[]).map(a=>a.name);
+ const fill=saved=>{const map={};(saved||[]).forEach(a=>map[a.name]=a);names.forEach(n=>{if(!map[n])map[n]={name:n,months:{}}});F.agents=Object.values(map);render()};
+ if(F.preview||!S.db)return fill([]);S.db.doc('forecasts/'+q.key+'_'+gid).get().then(d=>fill(d.exists?d.data().agents:[])).catch(e=>{F.msg='Could not load: '+e.message;fill([])})}
+function grab(){const F=S.fc,ks=KPIS.map(k=>k.id);F.agents.forEach((a,i)=>{const o={};let any=false;ks.forEach(k=>{const el=document.getElementById('i_'+i+'_'+k);if(el&&el.value!==''){o[k]=+el.value;any=true}});if(document.getElementById('i_'+i+'_fenix')){if(any)a.months[F.month]=o;else delete a.months[F.month]}})}
+function setMonth(m){grab();S.fc.month=m;render()}
+function addAgent(){grab();const el=document.getElementById('newagent'),n=(el.value||'').trim();if(n&&!S.fc.agents.find(a=>a.name===n))S.fc.agents.push({name:n,months:{}});render()}
+function saveFc(){grab();const F=S.fc,q=qInfo();if(F.preview){F.msg='Preview only: nothing is saved.';return render()}
+ S.db.doc('forecasts/'+q.key+'_'+F.gid).set({group:F.gid,quarter:q.key,updatedAt:new Date().toISOString(),updatedBy:S.user.email,agents:F.agents}).then(()=>{F.msg='Saved '+new Date().toLocaleTimeString();render()}).catch(e=>{F.msg='Save failed: '+e.message;render()})}
+function forecast(){const F=S.fc,q=qInfo();
+ const head=`<h1>Bonus Forecast</h1><div class="sub">Managers enter each agent’s monthly scores. The quarterly average sets the projected payout: full target = $50, within range = $25, below minimum = $0 per KPI, $200 maximum per agent.</div>`;
+ if(new Date()<OPEN_DATE&&!F.preview)return head+`<div class="card lock"><h2>Opens January 2027</h2><p>Managers will enter each agent’s Call Quality, Task Score, Call Completion and Callback Rate for every month of the quarter, and the page projects each agent’s bonus. Entry starts with January 2027.</p><button class="btn g2" onclick="S.fc.preview=true;loadFc('pod1')">Preview the layout</button></div>`;
+ if(!F.preview&&!S.db)return head+'<div class="banner">Connect Firebase first (add your config in index.html).</div>';
+ if(!F.preview&&!S.user)return head+`<div class="card lock"><h2>Managers sign in</h2><p>Sign in with your company Google account to enter scores. You can only edit your own group.</p><button class="btn" onclick="firebase.auth().signInWithPopup(new firebase.auth.GoogleAuthProvider()).catch(e=>alert(e.message))">Sign in with Google</button></div>`;
+ if(!F.preview&&S.mg==null)return head+'<div class="banner">Loading…</div>';
+ const al=allowed();if(!al.length)return head+`<div class="banner">${S.user.email} isn’t set up for forecasts yet. Ask the Hub admin to add it. <button class="btn g2" onclick="firebase.auth().signOut()">Sign out</button></div>`;
+ if(!F.gid||!al.includes(F.gid)){setTimeout(()=>loadFc(al[0]),0);return head+'<div class="banner">Loading…</div>'}
+ const kpiHead=KPIS.map(k=>`<th>${k.label}${k.u?' (%)':''}</th>`).join('');
+ const rows=F.agents.map((a,i)=>{const cur=a.months[F.month]||{};return `<tr><td>${a.name}</td>${KPIS.map(k=>`<td><input type="number" step="0.1" id="i_${i}_${k.id}" value="${cur[k.id]??''}"></td>`).join('')}</tr>`}).join('');
+ const calc=F.agents.map(a=>{const avg={},p={};let tot=0;KPIS.forEach(k=>{avg[k.id]=mean(q.months.map(m=>a.months[m]?.[k.id]));p[k.id]=pay(k,avg[k.id]);tot+=p[k.id]||0});return {a,avg,p,tot,n:q.months.filter(m=>a.months[m]).length}});
+ const grand=calc.reduce((s,c)=>s+c.tot,0);
+ return head+`<div class="fx">${F.preview?'<span class="tag mid">Preview · sample data, nothing is saved</span>':`<span class="gm">Signed in as ${S.user.email}</span> <button class="btn g2" onclick="firebase.auth().signOut()">Sign out</button>`}
+ <select onchange="grab();loadFc(this.value)">${al.map(id=>`<option value="${id}" ${id===F.gid?'selected':''}>${GROUPS.find(g=>g[0]===id)[1]} · ${GROUPS.find(g=>g[0]===id)[2]}</option>`).join('')}</select>
+ <div class="mt">${q.months.map(m=>`<button class="${m===F.month?'on':''}" onclick="setMonth('${m}')">${mName(m)}</button>`).join('')}</div></div>
+ <div class="card" style="margin-bottom:18px"><div class="ch"><h2>${mName(F.month)} scores</h2><span>${q.label}</span></div><div style="overflow-x:auto"><table><tr><th>Agent</th>${kpiHead}</tr>${rows||'<tr><td colspan=5>No agents yet. Add one below.</td></tr>'}</table></div>
+ <div class="ch" style="border-top:1px solid var(--line);border-bottom:0"><div class="fx" style="margin:0"><input type="text" id="newagent" placeholder="Add agent name"><button class="btn g2" onclick="addAgent()">Add</button></div><div class="fx" style="margin:0"><span class="gm">${F.msg||''}</span><button class="btn" onclick="saveFc()">Save ${mName(F.month)}</button></div></div></div>
+ <div class="card"><div class="ch"><h2>Projected quarterly bonus</h2><span>Group total $${grand} of $${F.agents.length*200} possible</span></div><div style="overflow-x:auto"><table><tr><th>Agent</th>${KPIS.map(k=>`<th>${k.label}<br><span style="text-transform:none;font-weight:500">Q avg · payout</span></th>`).join('')}<th>Months</th><th>Projected</th></tr>
+ ${calc.map(c=>`<tr><td>${c.a.name}</td>${KPIS.map(k=>`<td class="${st(k,c.avg[k.id])}">${f(c.avg[k.id],k.u)} · ${c.p[k.id]==null?'–':'$'+c.p[k.id]}</td>`).join('')}<td>${c.n} of 3</td><td><b>$${c.tot}</b> <span class="gm">/ $200</span></td></tr>`).join('')||'<tr><td colspan=7>No agents yet</td></tr>'}</table></div></div>`}
+function render(){document.getElementById('app').innerHTML=S.page==='ov'?overview():S.page==='wk'?weekly():forecast();
+ ['ov','wk','fc'].forEach(k=>document.getElementById('t-'+k).classList.toggle('on',S.page===k));
+ const first=Object.values(S.data)[0]||{};document.getElementById('dot').className='dot'+(S.live?' live':'');document.getElementById('upd').textContent=S.live?'Live · report '+(first.reportDate||''):'Sample data'}
 init();
 </script></body></html>
