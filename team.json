@@ -1,0 +1,66 @@
+[
+ {
+  "name": "Shannon",
+  "role": "Senior Business Manager",
+  "group": "all",
+  "photo": "",
+  "funFact": "",
+  "quote": ""
+ },
+ {
+  "name": "Joi",
+  "role": "Renewal Manager",
+  "group": "all",
+  "photo": "",
+  "funFact": "",
+  "quote": ""
+ },
+ {
+  "name": "Rowel",
+  "role": "Prospect Experience Manager",
+  "group": "all",
+  "photo": "",
+  "funFact": "",
+  "quote": ""
+ },
+ {
+  "name": "Camden",
+  "role": "POD 1 Manager",
+  "group": "pod1",
+  "photo": "",
+  "funFact": "",
+  "quote": ""
+ },
+ {
+  "name": "Candace",
+  "role": "POD 2 Manager",
+  "group": "pod2",
+  "photo": "",
+  "funFact": "",
+  "quote": ""
+ },
+ {
+  "name": "Edwin",
+  "role": "POD 3 Manager",
+  "group": "pod3",
+  "photo": "",
+  "funFact": "",
+  "quote": ""
+ },
+ {
+  "name": "Maritza",
+  "role": "Denver Manager",
+  "group": "denver",
+  "photo": "",
+  "funFact": "",
+  "quote": ""
+ },
+ {
+  "name": "Lauren",
+  "role": "AA Manager",
+  "group": "aa",
+  "photo": "",
+  "funFact": "",
+  "quote": ""
+ }
+]
