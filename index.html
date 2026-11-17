@@ -49,11 +49,20 @@ select,input[type=text],input[type=number]{font:600 13px Inter,system-ui,sans-se
 input[type=number]{width:84px}
 .mt{display:flex;gap:6px}.mt button{border:1px solid #cfd7e3;background:#fff;border-radius:20px;padding:6px 14px;font:700 12px Inter,system-ui,sans-serif;cursor:pointer}.mt button.on{background:var(--navy);color:#fff;border-color:var(--navy)}
 .lock{padding:34px;text-align:center}.lock h2{margin-bottom:8px}.lock p{color:var(--mut);max-width:560px;margin:0 auto 16px;line-height:1.6}
+
+.hero{background:linear-gradient(135deg,#0b1b33,#1d3a6b 60%,#0e7490);color:#fff;border-radius:18px;padding:44px 40px;margin-bottom:22px}
+.hero h1{font-size:34px;letter-spacing:-.02em}.hero p{color:#cfe0f5;max-width:620px;margin-top:10px;line-height:1.6}
+.stats{display:flex;gap:30px;margin-top:24px;flex-wrap:wrap}.stats b{font-size:26px;display:block}.stats span{font-size:12px;color:#9fc3e8;text-transform:uppercase;letter-spacing:.06em}
+.people{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:16px}
+.pc{padding:22px 18px;text-align:center}.pc .ph{width:96px;height:96px;border-radius:50%;margin:0 auto 12px;overflow:hidden;display:flex;align-items:center;justify-content:center;color:#fff;font-size:30px;font-weight:800}
+.pc .ph img{width:100%;height:100%;object-fit:cover}.pc h3{font-size:15px}.pc .rl{color:var(--mut);font-size:12px;margin:2px 0 8px}
+.pc .ff{font-size:12px;color:var(--mut);line-height:1.5;margin-top:8px}.pc .q{font-size:12px;font-style:italic;color:#475569;margin-top:8px;line-height:1.5}
+.chips{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 16px}.chips button{border:1px solid #cfd7e3;background:#fff;border-radius:20px;padding:6px 14px;font:700 12px Inter,system-ui,sans-serif;cursor:pointer}.chips button.on{background:var(--navy);color:#fff;border-color:var(--navy)}
 @media(max-width:900px){.kpis{grid-template-columns:1fr 1fr}.lists,.two{grid-template-columns:1fr}main{padding:18px 14px}}
 @media print{header .tabs,.btn,.pill{display:none}body{background:#fff}.card{box-shadow:none}}
 </style></head><body>
 <header><div class="top"><div class="brand"><i></i>Centralized Team Hub</div>
-<div class="tabs"><button id="t-ov" onclick="go('ov')">Overview</button><button id="t-wk" onclick="go('wk')">Weekly Glance</button><button id="t-fc" onclick="go('fc')">Bonus Forecast</button></div>
+<div class="tabs"><button id="t-wel" onclick="go('wel')">Welcome</button><button id="t-ov" onclick="go('ov')">Overview</button><button id="t-wk" onclick="go('wk')">Weekly Glance</button><button id="t-fc" onclick="go('fc')">Bonus Forecast</button></div>
 <div class="sp"></div><div class="pill"><span class="dot" id="dot"></span><span id="upd"></span></div></div></header>
 <main id="app"></main>
 <script>
@@ -67,7 +76,7 @@ const KPIS=[
  {id:'call_back_rate',label:'Callback Rate',src:'Phone Report',full:95,min:80,u:'%'}];
 const GROUPS=[['pod1','POD 1','CO Springs + UT','Camdem'],['pod2','POD 2','AZ','Candace'],['pod3','POD 3','KS/MO/TN + FL','Edwin'],['denver','Denver','Pilot','Maritza'],['aa','AA','Application Admin','Lauren']];
 const OPEN_DATE=new Date('2027-01-01T00:00:00');
-let S={page:'ov',open:null,data:{},hist:{},live:false,db:null,user:null,mg:null,fc:{gid:null,month:null,agents:[],preview:false,msg:''}};
+let S={page:'wel',team:null,tf:'all',open:null,data:{},hist:{},live:false,db:null,user:null,mg:null,fc:{gid:null,month:null,agents:[],preview:false,msg:''}};
 const st=(k,v)=>v==null?'na':v>=k.full?'ok':v>=k.min?'mid':'bad';
 const pay=(k,v)=>v==null?null:v>=k.full?50:v>=k.min?25:0;
 const f=(v,u)=>v==null?'–':v+u, mean=a=>{a=a.filter(x=>x!=null&&x!=='');return a.length?+(a.reduce((x,y)=>x+ +y,0)/a.length).toFixed(1):null};
@@ -76,7 +85,7 @@ function demo(){let n=7;const r=()=>(n=(n*9301+49297)%233280)/233280,d={},h={};
  GROUPS.forEach(([id])=>{const b=[84+r()*10,6.5+r()*2.5,72+r()*14,85+r()*13];h[id]=Array.from({length:8},()=>({fenix:+(b[0]+r()*4-2).toFixed(1),task_management:+(b[1]+r()-.5).toFixed(1),call_completion:+(b[2]+r()*4-2).toFixed(1),call_back_rate:+(b[3]+r()*3-1.5).toFixed(1)}));
   d[id]={team:h[id][7],reportDate:'sample',agents:['Agent A','Agent B','Agent C','Agent D'].map(a=>({name:a,task_management:+(5.5+r()*4.5).toFixed(1),fenix:+(74+r()*24).toFixed(1),calls:Math.round(8+r()*40)})),communities:[{name:'Community 1',fenix:88,calls:20},{name:'Community 2',fenix:94,calls:15}]}});
  S.data=d;S.hist=h}
-function init(){demo();render();if(!FIREBASE_CONFIG)return;
+function init(){demo();loadTeam();render();if(!FIREBASE_CONFIG)return;
  try{firebase.initializeApp(FIREBASE_CONFIG);S.db=firebase.firestore();
   S.db.collection('groups').onSnapshot(q=>{const d={};q.forEach(x=>d[x.id]=x.data());if(Object.keys(d).length){S.data=d;S.live=true;S.hist={};render()}});
   const m=new Date().toISOString().slice(0,7)+'-01';
@@ -116,6 +125,18 @@ function weekly(){const dt=new Date().toLocaleDateString('en-US',{weekday:'long'
  <div class="card" style="margin-bottom:18px"><div class="ch"><h2>Summary</h2></div><ul class="sum">${lines}</ul></div>
  <div class="card"><div class="ch"><h2>Scorecard by group</h2></div><table><tr><th>Group</th><th>Manager</th>${KPIS.map(k=>`<th>${k.label}</th>`).join('')}</tr>
  ${GROUPS.map(([id,n,reg,m])=>`<tr><td class="gn">${n} <span style="font-weight:500;color:var(--mut)">· ${reg}</span></td><td>${m}</td>${KPIS.map(k=>`<td class="${st(k,T(id)[k.id])}">${f(T(id)[k.id],k.u)}</td>`).join('')}</tr>`).join('')}</table></div>`}
+// ---------- Welcome / team page (reads team.json from the repo; photos live in /photos) ----------
+const TEAM_FALLBACK=[{name:'Shannon',role:'Senior Business Manager',group:'all'},{name:'Joi',role:'Renewal Manager',group:'all'},{name:'Camdem',role:'POD 1 Manager',group:'pod1'},{name:'Candace',role:'POD 2 Manager',group:'pod2'},{name:'Edwin',role:'POD 3 Manager',group:'pod3'},{name:'Maritza',role:'Denver Manager',group:'denver'},{name:'Lauren',role:'AA Manager',group:'aa'}];
+const COMMUNITIES=59, GCOL={pod1:'#2563eb',pod2:'#0d9488',pod3:'#7c3aed',denver:'#c2410c',aa:'#be185d',all:'#0b1b33'};
+function loadTeam(){fetch('team.json',{cache:'no-store'}).then(r=>r.json()).then(t=>{S.team=t;render()}).catch(()=>{S.team=TEAM_FALLBACK;render()})}
+function welcome(){const t=S.team||TEAM_FALLBACK,list=t.filter(p=>S.tf==='all'||p.group===S.tf||p.group==='all');
+ const ini=n=>n.split(' ').map(x=>x[0]).slice(0,2).join('').toUpperCase();
+ return `<div class="hero"><h1>The Centralized Team</h1><p>One team supporting every community. Meet the people behind the calls, the tasks and the scores.</p>
+ <div class="stats"><div><b>${t.length}</b><span>Team members</span></div><div><b>${GROUPS.length}</b><span>Groups</span></div><div><b>${COMMUNITIES}</b><span>Communities</span></div></div></div>
+ <div class="chips">${[['all','Everyone'],...GROUPS.map(g=>[g[0],g[1]])].map(([id,n])=>`<button class="${S.tf===id?'on':''}" onclick="S.tf='${id}';render()">${n}</button>`).join('')}</div>
+ <div class="people">${list.map(p=>`<div class="card pc"><div class="ph" style="background:${GCOL[p.group]||GCOL.all}">${p.photo?`<img src="${p.photo}" alt="${p.name}" onerror="this.remove()">`:''}<span>${ini(p.name)}</span></div>
+ <h3>${p.name}</h3><div class="rl">${p.role||''}</div><span class="tag" style="background:${(GCOL[p.group]||GCOL.all)}18;color:${GCOL[p.group]||GCOL.all}">${p.group==='all'?'Entire portfolio':GROUPS.find(g=>g[0]===p.group)?.[1]||'Team'}</span>
+ ${p.funFact?`<div class="ff">${p.funFact}</div>`:''}${p.quote?`<div class="q">“${p.quote}”</div>`:''}</div>`).join('')||'<div class="banner">No team members yet. Add them in team.json.</div>'}</div>`}
 // ---------- Bonus forecast (managers sign in; scores entered monthly from Jan 2027) ----------
 function qInfo(){const d=new Date()<OPEN_DATE?OPEN_DATE:new Date(),q=Math.floor(d.getMonth()/3),y=d.getFullYear();
  return {key:y+'Q'+(q+1),label:'Q'+(q+1)+' '+y,months:[0,1,2].map(i=>y+'-'+String(q*3+i+1).padStart(2,'0'))}}
@@ -150,8 +171,8 @@ function forecast(){const F=S.fc,q=qInfo();
  <div class="ch" style="border-top:1px solid var(--line);border-bottom:0"><div class="fx" style="margin:0"><input type="text" id="newagent" placeholder="Add agent name"><button class="btn g2" onclick="addAgent()">Add</button></div><div class="fx" style="margin:0"><span class="gm">${F.msg||''}</span><button class="btn" onclick="saveFc()">Save ${mName(F.month)}</button></div></div></div>
  <div class="card"><div class="ch"><h2>Projected quarterly bonus</h2><span>Group total $${grand} of $${F.agents.length*200} possible</span></div><div style="overflow-x:auto"><table><tr><th>Agent</th>${KPIS.map(k=>`<th>${k.label}<br><span style="text-transform:none;font-weight:500">Q avg · payout</span></th>`).join('')}<th>Months</th><th>Projected</th></tr>
  ${calc.map(c=>`<tr><td>${c.a.name}</td>${KPIS.map(k=>`<td class="${st(k,c.avg[k.id])}">${f(c.avg[k.id],k.u)} · ${c.p[k.id]==null?'–':'$'+c.p[k.id]}</td>`).join('')}<td>${c.n} of 3</td><td><b>$${c.tot}</b> <span class="gm">/ $200</span></td></tr>`).join('')||'<tr><td colspan=7>No agents yet</td></tr>'}</table></div></div>`}
-function render(){document.getElementById('app').innerHTML=S.page==='ov'?overview():S.page==='wk'?weekly():forecast();
- ['ov','wk','fc'].forEach(k=>document.getElementById('t-'+k).classList.toggle('on',S.page===k));
+function render(){document.getElementById('app').innerHTML=S.page==='wel'?welcome():S.page==='ov'?overview():S.page==='wk'?weekly():forecast();
+ ['wel','ov','wk','fc'].forEach(k=>document.getElementById('t-'+k).classList.toggle('on',S.page===k));
  const first=Object.values(S.data)[0]||{};document.getElementById('dot').className='dot'+(S.live?' live':'');document.getElementById('upd').textContent=S.live?'Live · report '+(first.reportDate||''):'Sample data'}
 init();
 </script></body></html>
