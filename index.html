@@ -58,11 +58,14 @@ input[type=number]{width:84px}
 .pc .ph img{width:100%;height:100%;object-fit:cover}.pc h3{font-size:15px}.pc .rl{color:var(--mut);font-size:12px;margin:2px 0 8px}
 .pc .ff{font-size:12px;color:var(--mut);line-height:1.5;margin-top:8px}.pc .q{font-size:12px;font-style:italic;color:#475569;margin-top:8px;line-height:1.5}
 .chips{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 16px}.chips button{border:1px solid #cfd7e3;background:#fff;border-radius:20px;padding:6px 14px;font:700 12px Inter,system-ui,sans-serif;cursor:pointer}.chips button.on{background:var(--navy);color:#fff;border-color:var(--navy)}
+.sec{margin-bottom:34px}.sh{display:flex;gap:14px;align-items:center;margin-bottom:14px}.sh h2{font-size:18px;font-weight:800}
+.num{width:34px;height:34px;border-radius:10px;background:var(--navy);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800}
+.soon{padding:20px}.chipsl{display:flex;gap:8px;flex-wrap:wrap}.chipsl span{background:#eef3fa;border-radius:20px;padding:6px 12px;font-size:13px;font-weight:600}
 @media(max-width:900px){.kpis{grid-template-columns:1fr 1fr}.lists,.two{grid-template-columns:1fr}main{padding:18px 14px}}
 @media print{header .tabs,.btn,.pill{display:none}body{background:#fff}.card{box-shadow:none}}
 </style></head><body>
 <header><div class="top"><div class="brand"><i></i>Centralized Team Hub</div>
-<div class="tabs"><button id="t-wel" onclick="go('wel')">Welcome</button><button id="t-ov" onclick="go('ov')">Overview</button><button id="t-wk" onclick="go('wk')">Weekly Glance</button><button id="t-fc" onclick="go('fc')">Bonus Forecast</button></div>
+<div class="tabs"><button id="t-wel" onclick="go('wel')">Welcome</button><button id="t-ov" onclick="go('ov')">Overview</button><button id="t-fc" onclick="go('fc')">Bonus Forecast</button></div>
 <div class="sp"></div><div class="pill"><span class="dot" id="dot"></span><span id="upd"></span></div></div></header>
 <main id="app"></main>
 <script>
@@ -74,7 +77,10 @@ const KPIS=[
  {id:'task_management',label:'Task Score',src:'Agent Score',full:8,min:6,u:''},
  {id:'call_completion',label:'Call Completion',src:'Phone Report',full:80,min:70,u:'%'},
  {id:'call_back_rate',label:'Callback Rate',src:'Phone Report',full:95,min:80,u:'%'}];
-const GROUPS=[['pod1','POD 1','CO Springs + UT','Camdem'],['pod2','POD 2','AZ','Candace'],['pod3','POD 3','KS/MO/TN + FL','Edwin'],['denver','Denver','Pilot','Maritza'],['aa','AA','Application Admin','Lauren']];
+const GROUPS=[['pod1','POD 1','CO Springs','Camden','ret'],['pod2','POD 2','AZ/UT','Candace','ret'],['denver','POD 2','Denver','Maritza','ret'],['pod3','POD 3','FL/TN/MO/KS','Edwin','ret'],['aa','Application','AA','Lauren','app']];
+const RET=GROUPS.filter(g=>g[4]==='ret');
+const ROSTER={pod1:['Czarina Centeno','Daphne Sigaton','Erika Pena','Andrea Carcamo'],pod2:['Ariel Colina','Boris Villacorta','Shane Catando'],denver:['Dennis Manahan','Daniela Palacios'],
+ pod3:['Alejandro Parra','Gabriel Lavarias','Shane Catando','Valentina Melo'],aa:['Kreezia Borjal','Maria Garcia','Mary Panimbagon','Jeffrey Bolo'],renewal:['Johnnylyn Penazo','Alvarica Sandal','Jet Abellar']};
 const OPEN_DATE=new Date('2027-01-01T00:00:00');
 let S={page:'wel',team:null,tf:'all',open:null,data:{},hist:{},live:false,db:null,user:null,mg:null,fc:{gid:null,month:null,agents:[],preview:false,msg:''}};
 const st=(k,v)=>v==null?'na':v>=k.full?'ok':v>=k.min?'mid':'bad';
@@ -83,7 +89,7 @@ const f=(v,u)=>v==null?'–':v+u, mean=a=>{a=a.filter(x=>x!=null&&x!=='');return
 const lab={ok:'On target',mid:'Within range',bad:'Below minimum',na:'No data'};
 function demo(){let n=7;const r=()=>(n=(n*9301+49297)%233280)/233280,d={},h={};
  GROUPS.forEach(([id])=>{const b=[84+r()*10,6.5+r()*2.5,72+r()*14,85+r()*13];h[id]=Array.from({length:8},()=>({fenix:+(b[0]+r()*4-2).toFixed(1),task_management:+(b[1]+r()-.5).toFixed(1),call_completion:+(b[2]+r()*4-2).toFixed(1),call_back_rate:+(b[3]+r()*3-1.5).toFixed(1)}));
-  d[id]={team:h[id][7],reportDate:'sample',agents:['Agent A','Agent B','Agent C','Agent D'].map(a=>({name:a,task_management:+(5.5+r()*4.5).toFixed(1),fenix:+(74+r()*24).toFixed(1),calls:Math.round(8+r()*40)})),communities:[{name:'Community 1',fenix:88,calls:20},{name:'Community 2',fenix:94,calls:15}]}});
+  d[id]={team:h[id][7],reportDate:'sample',agents:(ROSTER[id]||[]).map(a=>({name:a,task_management:+(5.5+r()*4.5).toFixed(1),fenix:+(74+r()*24).toFixed(1),calls:Math.round(8+r()*40)})),communities:[{name:'Community 1',fenix:88,calls:20},{name:'Community 2',fenix:94,calls:15}]}});
  S.data=d;S.hist=h}
 function init(){demo();loadTeam();render();if(!FIREBASE_CONFIG)return;
  try{firebase.initializeApp(FIREBASE_CONFIG);S.db=firebase.firestore();
@@ -99,52 +105,56 @@ function tile(k,vals){const v=mean(vals),c=st(k,v),on=vals.filter(x=>st(k,x)==='
  return `<div class="card kpi ${c}"><div class="l">${k.label}</div><div class="v">${f(v,k.u)}</div><div class="g">Target ≥${k.full}${k.u} · minimum ${k.min}${k.u}</div>
  <div class="bar"><i style="width:${v==null?0:Math.min(100,v/k.full*100)}%"></i></div><span class="tag ${c}">${vals.length?on+' of '+vals.length+' groups on target':'No data'}</span></div>`}
 const T=id=>S.data[id]?.team||{};
-const tiles=()=>`<div class="kpis">${KPIS.map(k=>tile(k,GROUPS.map(g=>T(g[0])[k.id]).filter(x=>x!=null))).join('')}</div>`;
+const tiles=()=>`<div class="kpis">${KPIS.map(k=>tile(k,RET.map(g=>T(g[0])[k.id]).filter(x=>x!=null))).join('')}</div>`;
 const legend='<div class="legend"><span><i style="background:#22a55a"></i>On target</span><span><i style="background:#f2b01e"></i>Within range (partial)</span><span><i style="background:#dc2626"></i>Below minimum</span></div>';
-function detail(d){const ag=[...(d.agents||[])].sort((a,b)=>(a.fenix??999)-(b.fenix??999)),c=(k,v)=>`<td class="${st(KPIS.find(x=>x.id===k),v)}">${f(v,k==='fenix'?'%':'')}</td>`;
- return `<tr class="det"><td colspan="7"><div class="two"><div><h3>Agents</h3><table><tr><th>Agent</th><th>Call Quality</th><th>Task Score</th><th>Calls</th></tr>
- ${ag.map(a=>`<tr><td>${a.name}</td>${c('fenix',a.fenix)}${c('task_management',a.task_management)}<td>${a.calls??'–'}</td></tr>`).join('')||'<tr><td colspan=4>No agents yet</td></tr>'}</table></div>
+const norm=x=>String(x||'').toLowerCase().replace(/\s+/g,' ').trim();
+function agentsFor(id,d){const ro=ROSTER[id]||[],ag=d?.agents||[],used=new Set();
+ const rows=ro.map(n=>{const a=ag.find(x=>norm(x.name)===norm(n));if(a)used.add(a);return {name:n,a}});
+ ag.forEach(a=>{if(!used.has(a))rows.push({name:a.name,a,extra:true})});return rows}
+function detail(id,d){const c=(k,v)=>`<td class="${st(KPIS.find(x=>x.id===k),v)}">${f(v,k==='fenix'?'%':'')}</td>`;
+ return `<tr class="det"><td colspan="6"><div class="two"><div><h3>Agents</h3><table><tr><th>Agent</th><th>Call Quality</th><th>Task Score</th><th>Calls</th></tr>
+ ${agentsFor(id,d).map(r=>`<tr><td>${r.name}${r.extra?' <span class="gm">(not on roster)</span>':''}</td>${c('fenix',r.a?.fenix)}${c('task_management',r.a?.task_management)}<td>${r.a?.calls??'–'}</td></tr>`).join('')||'<tr><td colspan=4>No agents yet</td></tr>'}</table></div>
  <div><h3>Communities · call quality</h3><table><tr><th>Community</th><th>Score</th><th>Calls</th></tr>
- ${(d.communities||[]).slice().sort((a,b)=>a.fenix-b.fenix).map(x=>`<tr><td>${x.name}</td>${c('fenix',x.fenix)}<td>${x.calls}</td></tr>`).join('')||'<tr><td colspan=3>No data</td></tr>'}</table></div></div>
- ${(d.warnings||[]).length?`<div class="gm" style="margin-top:10px">⚠ ${d.warnings.join(' · ')}</div>`:''}</td></tr>`}
-function overview(){const rows=GROUPS.map(([id,n,reg,mgr])=>{const d=S.data[id],t=T(id),on=KPIS.filter(k=>st(k,t[k.id])==='ok').length;
-  return `<tr class="r" onclick="S.open=S.open==='${id}'?null:'${id}';render()"><td><div class="gn">${n} <span style="font-weight:500;color:var(--mut)">· ${reg}</span></div><div class="gm">Manager: ${mgr}</div></td>
+ ${(d?.communities||[]).slice().sort((a,b)=>a.fenix-b.fenix).map(x=>`<tr><td>${x.name}</td>${c('fenix',x.fenix)}<td>${x.calls}</td></tr>`).join('')||'<tr><td colspan=3>No data</td></tr>'}</table></div></div>
+ ${(d?.warnings||[]).length?`<div class="gm" style="margin-top:10px">⚠ ${d.warnings.join(' · ')}</div>`:''}</td></tr>`}
+const sec=(n,t,sub,body)=>`<section class="sec"><div class="sh"><span class="num">${n}</span><div><h2>${t}</h2><div class="gm">${sub}</div></div></div>${body}</section>`;
+const soon=(mgr,key)=>`<div class="card soon"><div class="tag mid" style="margin-bottom:10px">Scores and targets to be followed</div>${mgr?`<div class="gm" style="margin-bottom:8px">Manager: <b>${mgr}</b></div>`:''}
+ ${(ROSTER[key]||[]).length?`<div class="chipsl">${ROSTER[key].map(n=>`<span>${n}</span>`).join('')}</div>`:'<div class="gm">Team members will be listed here.</div>'}</div>`;
+function retSection(){const rows=RET.map(([id,n,reg,mgr])=>{const d=S.data[id],t=T(id),on=KPIS.filter(k=>st(k,t[k.id])==='ok').length;
+  return `<tr class="r" onclick="S.open=S.open==='${id}'?null:'${id}';render()"><td><div class="gn">${mgr} <span style="font-weight:500;color:var(--mut)">· ${n} · ${reg}</span></div><div class="gm">${(ROSTER[id]||[]).join(' · ')}</div></td>
   ${KPIS.map(k=>`<td>${d?`<div class="m ${st(k,t[k.id])}"><b>${f(t[k.id],k.u)}</b>${spark(id,k.id)}</div>`:'<span class="tag">No data yet</span>'}</td>`).join('')}
-  <td><div class="dots">${KPIS.map(k=>`<i class="${st(k,t[k.id])==='na'?'':st(k,t[k.id])}"></i>`).join('')}</div><div class="gm">${d?on+' of 4 on target':''}</div></td></tr>${S.open===id&&d?detail(d):''}`}).join('');
- const ag=[];Object.entries(S.data).forEach(([id,d])=>(d.agents||[]).forEach(a=>{if(a.fenix!=null&&(a.calls||0)>=5)ag.push({...a,g:GROUPS.find(x=>x[0]===id)?.[1]||id})}));
- const li=a=>`<div class="li"><span>${a.name} <small>· ${a.g}</small></span><b class="${st(KPIS[0],a.fenix)==='ok'?'':''}" style="color:var(--${st(KPIS[0],a.fenix)})">${a.fenix}%</b></div>`;
- return `<h1>Performance Overview</h1><div class="sub">Targets follow the Resident Experience incentive plan · Phone, Agent Score and Insights</div>${legend}
- ${S.live?'':'<div class="banner">Showing sample data. Add your Firebase config to <b>index.html</b> to go live.</div>'}${tiles()}
- <div class="card"><div class="ch"><h2>Group scorecard</h2><span>Click a group for agents and communities</span></div><table><tr><th>Group</th>${KPIS.map(k=>`<th>${k.label}</th>`).join('')}<th>Status</th></tr>${rows}</table></div>
+  <td><div class="dots">${KPIS.map(k=>`<i class="${st(k,t[k.id])==='na'?'':st(k,t[k.id])}"></i>`).join('')}</div><div class="gm">${d?on+' of 4 on target':''}</div></td></tr>${S.open===id?detail(id,d):''}`}).join('');
+ const ag=[];RET.forEach(([id,n,reg])=>(S.data[id]?.agents||[]).forEach(a=>{if(a.fenix!=null&&(a.calls||0)>=5)ag.push({...a,g:n+' · '+reg})}));
+ const li=a=>`<div class="li"><span>${a.name} <small>· ${a.g}</small></span><b style="color:var(--${st(KPIS[0],a.fenix)})">${a.fenix}%</b></div>`;
+ return legend+tiles()+`<div class="card"><div class="ch"><h2>Group scorecard</h2><span>Click a manager to see each agent’s scores and the communities</span></div><table><tr><th>Manager · Group</th>${KPIS.map(k=>`<th>${k.label}</th>`).join('')}<th>Status</th></tr>${rows}</table></div>
  <div class="lists"><div class="card"><div class="ch"><h2>Needs attention</h2><span>Lowest call quality · 5+ calls</span></div>${ag.slice().sort((a,b)=>a.fenix-b.fenix).slice(0,5).map(li).join('')||'<div class="li">No data</div>'}</div>
  <div class="card"><div class="ch"><h2>Top performers</h2><span>Highest call quality · 5+ calls</span></div>${ag.slice().sort((a,b)=>b.fenix-a.fenix).slice(0,5).map(li).join('')||'<div class="li">No data</div>'}</div></div>`}
-function weekly(){const dt=new Date().toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',year:'numeric'});
- const lines=KPIS.map(k=>{const all=GROUPS.filter(g=>T(g[0])[k.id]!=null),by=s=>all.filter(g=>st(k,T(g[0])[k.id])===s).map(g=>g[1]+' ('+T(g[0])[k.id]+k.u+')');
-  return `<li><b>${k.label}</b>: ${by('ok').length} of ${all.length} groups on target (≥${k.full}${k.u}).${by('mid').length?' Within range: '+by('mid').join(', ')+'.':''}${by('bad').length?' Below minimum: '+by('bad').join(', ')+'.':''}</li>`}).join('');
- return `<h1>Weekly At-a-Glance</h1><div class="sub">${dt}</div>${legend}<div style="margin-bottom:16px"><button class="btn" onclick="print()">Print / Save as PDF</button></div>${tiles()}
- <div class="card" style="margin-bottom:18px"><div class="ch"><h2>Summary</h2></div><ul class="sum">${lines}</ul></div>
- <div class="card"><div class="ch"><h2>Scorecard by group</h2></div><table><tr><th>Group</th><th>Manager</th>${KPIS.map(k=>`<th>${k.label}</th>`).join('')}</tr>
- ${GROUPS.map(([id,n,reg,m])=>`<tr><td class="gn">${n} <span style="font-weight:500;color:var(--mut)">· ${reg}</span></td><td>${m}</td>${KPIS.map(k=>`<td class="${st(k,T(id)[k.id])}">${f(T(id)[k.id],k.u)}</td>`).join('')}</tr>`).join('')}</table></div>`}
+function overview(){
+ return `<h1>MTD Scores</h1><div class="sub">Month-to-date scores by department · refreshes automatically every day</div>
+ ${S.live?'':'<div class="banner">Showing sample data. Add your Firebase config to <b>index.html</b> to go live.</div>'}
+ ${sec(1,'LMS Scores','To be followed',soon('', 'lms'))}
+ ${sec(2,'Application Scores','Lauren’s team · to be followed',soon('Lauren','aa'))}
+ ${sec(3,'RET Scores','Resident Experience Team · Edwin, Camden, Maritza and Candace',retSection())}
+ ${sec(4,'Renewal Scores','Joi’s team · to be followed',soon('Joi','renewal'))}
+ ${sec(5,'Business Management Scores','To be followed',soon('Shannon','bm'))}`}
 // ---------- Welcome / team page (reads team.json from the repo; photos live in /photos) ----------
-const TEAM_FALLBACK=[{name:'Shannon',role:'Senior Business Manager',group:'all'},{name:'Joi',role:'Renewal Manager',group:'all'},{name:'Camdem',role:'POD 1 Manager',group:'pod1'},{name:'Candace',role:'POD 2 Manager',group:'pod2'},{name:'Edwin',role:'POD 3 Manager',group:'pod3'},{name:'Maritza',role:'Denver Manager',group:'denver'},{name:'Lauren',role:'AA Manager',group:'aa'}];
+const TEAM_FALLBACK=[{name:'Shannon',role:'Senior Business Manager',group:'all'},{name:'Joi',role:'Renewal Manager',group:'all'},{name:'Rowel',role:'Prospect Experience Manager',group:'all'},{name:'Camden',role:'POD 1 Manager',group:'pod1'},{name:'Candace',role:'POD 2 Manager',group:'pod2'},{name:'Edwin',role:'POD 3 Manager',group:'pod3'},{name:'Maritza',role:'Denver Manager',group:'denver'},{name:'Lauren',role:'AA Manager',group:'aa'}];
 const COMMUNITIES=59, GCOL={pod1:'#2563eb',pod2:'#0d9488',pod3:'#7c3aed',denver:'#c2410c',aa:'#be185d',all:'#0b1b33'};
 function loadTeam(){fetch('team.json',{cache:'no-store'}).then(r=>r.json()).then(t=>{S.team=t;render()}).catch(()=>{S.team=TEAM_FALLBACK;render()})}
-function welcome(){const t=S.team||TEAM_FALLBACK,list=t.filter(p=>S.tf==='all'||p.group===S.tf||p.group==='all');
+function welcome(){const t=S.team||TEAM_FALLBACK,list=t;
  const ini=n=>n.split(' ').map(x=>x[0]).slice(0,2).join('').toUpperCase();
  return `<div class="hero"><h1>The Centralized Team</h1><p>One team supporting every community. Meet the people behind the calls, the tasks and the scores.</p>
- <div class="stats"><div><b>${t.length}</b><span>Team members</span></div><div><b>${GROUPS.length}</b><span>Groups</span></div><div><b>${COMMUNITIES}</b><span>Communities</span></div></div></div>
- <div class="chips">${[['all','Everyone'],...GROUPS.map(g=>[g[0],g[1]])].map(([id,n])=>`<button class="${S.tf===id?'on':''}" onclick="S.tf='${id}';render()">${n}</button>`).join('')}</div>
+ <div class="stats"><div><b>${t.length}</b><span>Team members</span></div><div><b>5</b><span>Departments</span></div><div><b>${COMMUNITIES}</b><span>Communities</span></div></div></div>
  <div class="people">${list.map(p=>`<div class="card pc"><div class="ph" style="background:${GCOL[p.group]||GCOL.all}">${p.photo?`<img src="${p.photo}" alt="${p.name}" onerror="this.remove()">`:''}<span>${ini(p.name)}</span></div>
- <h3>${p.name}</h3><div class="rl">${p.role||''}</div><span class="tag" style="background:${(GCOL[p.group]||GCOL.all)}18;color:${GCOL[p.group]||GCOL.all}">${p.group==='all'?'Entire portfolio':GROUPS.find(g=>g[0]===p.group)?.[1]||'Team'}</span>
- ${p.funFact?`<div class="ff">${p.funFact}</div>`:''}${p.quote?`<div class="q">“${p.quote}”</div>`:''}</div>`).join('')||'<div class="banner">No team members yet. Add them in team.json.</div>'}</div>`}
+ <h3>${p.name}</h3><div class="rl">${p.role||''}</div>${p.funFact?`<div class="ff">${p.funFact}</div>`:''}${p.quote?`<div class="q">“${p.quote}”</div>`:''}</div>`).join('')||'<div class="banner">No team members yet. Add them in team.json.</div>'}</div>`}
 // ---------- Bonus forecast (managers sign in; scores entered monthly from Jan 2027) ----------
 function qInfo(){const d=new Date()<OPEN_DATE?OPEN_DATE:new Date(),q=Math.floor(d.getMonth()/3),y=d.getFullYear();
  return {key:y+'Q'+(q+1),label:'Q'+(q+1)+' '+y,months:[0,1,2].map(i=>y+'-'+String(q*3+i+1).padStart(2,'0'))}}
 const mName=m=>new Date(m+'-15').toLocaleDateString('en-US',{month:'long'});
-function allowed(){if(S.fc.preview)return GROUPS.map(g=>g[0]);const m=S.mg||{},e=(S.user?.email||'').toLowerCase();
- if((m.admins||[]).map(x=>x.toLowerCase()).includes(e))return GROUPS.map(g=>g[0]);const g=Object.entries(m.byEmail||{}).find(([k])=>k.toLowerCase()===e);return g?[g[1]]:[]}
+function allowed(){if(S.fc.preview)return RET.map(g=>g[0]);const m=S.mg||{},e=(S.user?.email||'').toLowerCase();
+ if((m.admins||[]).map(x=>x.toLowerCase()).includes(e))return RET.map(g=>g[0]);const g=Object.entries(m.byEmail||{}).find(([k])=>k.toLowerCase()===e);return g?[g[1]]:[]}
 function loadFc(gid){const q=qInfo(),F=S.fc;F.gid=gid;F.month=F.month||q.months[0];F.agents=[];
- const names=(S.data[gid]?.agents||[]).map(a=>a.name);
+ const names=ROSTER[gid]||[];
  const fill=saved=>{const map={};(saved||[]).forEach(a=>map[a.name]=a);names.forEach(n=>{if(!map[n])map[n]={name:n,months:{}}});F.agents=Object.values(map);render()};
  if(F.preview||!S.db)return fill([]);S.db.doc('forecasts/'+q.key+'_'+gid).get().then(d=>fill(d.exists?d.data().agents:[])).catch(e=>{F.msg='Could not load: '+e.message;fill([])})}
 function grab(){const F=S.fc,ks=KPIS.map(k=>k.id);F.agents.forEach((a,i)=>{const o={};let any=false;ks.forEach(k=>{const el=document.getElementById('i_'+i+'_'+k);if(el&&el.value!==''){o[k]=+el.value;any=true}});if(document.getElementById('i_'+i+'_fenix')){if(any)a.months[F.month]=o;else delete a.months[F.month]}})}
@@ -171,8 +181,10 @@ function forecast(){const F=S.fc,q=qInfo();
  <div class="ch" style="border-top:1px solid var(--line);border-bottom:0"><div class="fx" style="margin:0"><input type="text" id="newagent" placeholder="Add agent name"><button class="btn g2" onclick="addAgent()">Add</button></div><div class="fx" style="margin:0"><span class="gm">${F.msg||''}</span><button class="btn" onclick="saveFc()">Save ${mName(F.month)}</button></div></div></div>
  <div class="card"><div class="ch"><h2>Projected quarterly bonus</h2><span>Group total $${grand} of $${F.agents.length*200} possible</span></div><div style="overflow-x:auto"><table><tr><th>Agent</th>${KPIS.map(k=>`<th>${k.label}<br><span style="text-transform:none;font-weight:500">Q avg · payout</span></th>`).join('')}<th>Months</th><th>Projected</th></tr>
  ${calc.map(c=>`<tr><td>${c.a.name}</td>${KPIS.map(k=>`<td class="${st(k,c.avg[k.id])}">${f(c.avg[k.id],k.u)} · ${c.p[k.id]==null?'–':'$'+c.p[k.id]}</td>`).join('')}<td>${c.n} of 3</td><td><b>$${c.tot}</b> <span class="gm">/ $200</span></td></tr>`).join('')||'<tr><td colspan=7>No agents yet</td></tr>'}</table></div></div>`}
-function render(){document.getElementById('app').innerHTML=S.page==='wel'?welcome():S.page==='ov'?overview():S.page==='wk'?weekly():forecast();
- ['wel','ov','wk','fc'].forEach(k=>document.getElementById('t-'+k).classList.toggle('on',S.page===k));
- const first=Object.values(S.data)[0]||{};document.getElementById('dot').className='dot'+(S.live?' live':'');document.getElementById('upd').textContent=S.live?'Live · report '+(first.reportDate||''):'Sample data'}
+function render(){document.getElementById('app').innerHTML=S.page==='wel'?welcome():S.page==='ov'?overview():forecast();
+ ['wel','ov','fc'].forEach(k=>document.getElementById('t-'+k).classList.toggle('on',S.page===k));
+ const first=Object.values(S.data)[0]||{};const ts=Object.values(S.data).map(d=>d.updatedAt).filter(Boolean).sort().pop(),age=ts?(Date.now()-new Date(ts))/36e5:null,stale=S.live&&age!=null&&age>36;
+ document.getElementById('dot').className='dot'+(S.live&&!stale?' live':'');
+ document.getElementById('upd').textContent=!S.live?'Sample data':stale?'Not refreshed since '+new Date(ts).toLocaleString('en-US',{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'}):'Updated '+new Date(ts).toLocaleString('en-US',{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'})}
 init();
 </script></body></html>
